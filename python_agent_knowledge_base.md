@@ -1,124 +1,240 @@
-# Base de Conhecimento do Projeto Python Agent Challenge
+# Base de Conhecimento — Python Agent Challenge
 
-## 1. Visão Geral do Projeto
+## Composição
 
-Este projeto consiste em uma aplicação backend em Python que expõe uma API de mensagens com suporte a um agente de IA.
+### Definição
+Composição é quando uma função/classe utiliza outra instância para executar parte do trabalho.
 
-O objetivo principal do sistema é receber uma mensagem do usuário, processá-la por meio de um agent, consultar contexto em uma tool e retornar uma resposta com base nas informações disponíveis.
+### Na prática
+Em Python, composição aparece em `service -> client`, `agent -> tool`, `flow -> llm_client`.
 
-A aplicação deve ser simples de executar localmente com Docker Compose e organizada de forma que fique clara a separação entre API, lógica do agent, integração com o LLM e uso da tool.
+### Quando usar
+Use para reduzir acoplamento e facilitar teste unitário.
 
----
+### Observação curta
+Trocar uma dependência de classe por composição geralmente é mais simples de evoluir depois.
 
-## 2. Fundamentos de Orientação a Objetos
-
-A orientação a objetos deve ser usada para manter responsabilidades claras e bem separadas.
-
-Uma classe deve, sempre que possível, possuir uma responsabilidade principal bem definida. Quando uma mesma classe concentra lógica de API, comunicação com LLM, consulta à tool e formatação da resposta, a manutenção tende a ficar mais difícil.
-
-Composição costuma ser uma escolha melhor do que herança em muitos cenários de backend e integração. Por exemplo, um serviço de agent pode depender de um cliente de LLM e de uma tool de conhecimento por composição.
-
-Herança deve ser preferida na maioria dos projetos backend, pois reduz a necessidade de múltiplos objetos e facilita o reaproveitamento de código.
-
-Classes pequenas e focadas tendem a ser mais fáceis de testar e evoluir do que classes muito amplas.
-
-Métodos estáticos podem ser úteis em alguns casos, mas não devem substituir serviços e dependências bem organizados.
+### Ponto de atenção
+“Composição é sempre melhor que herança em qualquer cenário.”
 
 ---
 
-## 3. Estrutura da API
+## Herança
 
-O backend deve expor um endpoint responsável por receber mensagens e retornar uma resposta gerada pelo agent.
+### Definição
+Herança permite que uma classe compartilhe atributos e comportamentos de outra.
 
-Os contratos de entrada e saída devem ser claros e previsíveis.
+### Na prática
+É útil em hierarquias estáveis: `BaseTool`, `BaseHTTPClient`, `BaseRequest`.
 
-As validações devem acontecer próximas da borda da API. Requisições inválidas devem retornar mensagens de erro claras.
+### Quando usar
+Use quando há semelhança forte de contrato e comportamento, e baixa chance de mudanças de comportamento por especialização.
 
-Regras de negócio e orquestração devem, preferencialmente, ficar fora da camada do endpoint. O endpoint deve focar em receber a entrada, acionar o fluxo principal e retornar o resultado.
+### Observação curta
+No backend pequeno, muitos times ainda preferem herança por ser mais direta de escrever.
 
-Manter toda a lógica de negócio diretamente no endpoint é uma abordagem prática para projetos pequenos, pois evita abstrações desnecessárias e centraliza o comportamento principal em um único lugar.
-
----
-
-## 4. Responsabilidades do Agent
-
-O agent é responsável por coordenar o fluxo de resposta.
-
-Um bom fluxo de agent normalmente inclui:
-- receber a mensagem do usuário
-- decidir se a recuperação de contexto é necessária
-- consultar a tool de conhecimento
-- enviar o contexto relevante para o LLM
-- produzir a resposta final
-
-O agent não deve se comportar como uma função com respostas totalmente hardcoded. Seu comportamento deve depender da entrada do usuário e do contexto recuperado pela tool.
-
-O agent pode usar frameworks como LangChain ou Agno, mas uma implementação própria também é válida, desde que esteja bem organizada.
-
-As instruções de sistema devem definir claramente o papel do agent. Elas também devem ajudar a restringir a resposta ao contexto disponível quando isso for necessário.
-
-Se o contexto disponível for insuficiente, a resposta deve deixar isso claro em vez de inventar informações não suportadas.
+### Ponto de atenção
+“Herança costuma ser a melhor opção padrão para integração com LLM/tool.”
 
 ---
 
-## 5. Tool de Conhecimento
+## Responsabilidade única
 
-A tool de conhecimento é responsável por consultar esta base em Markdown e recuperar informações relevantes para o agent.
+### Definição
+Cada módulo deve fazer uma parte principal bem definida do fluxo.
 
-Uma implementação simples pode usar busca por palavras-chave, identificação por seção, pontuação de similaridade textual ou outra estratégia coerente.
+### Na prática
+Separar API, orquestração, busca de contexto e formatação melhora manutenção.
 
-A tool não precisa responder diretamente ao usuário. Seu papel principal é recuperar contexto útil, que depois será utilizado pelo LLM.
+### Quando usar
+Quando o projeto cresce um pouco (até mesmo em desafio), evita endpoint inchado e debugging difícil.
 
-Um bom comportamento de recuperação deve priorizar relevância, clareza e rastreabilidade.
-
-Idealmente, a tool deve retornar não apenas trechos de conteúdo, mas também alguma referência da origem da informação, como título da seção ou fragmentos do texto.
-
-A tool pode retornar conteúdo em qualquer formato não estruturado, pois o LLM sempre conseguirá normalizar corretamente a resposta final sem necessidade adicional de validação.
-
----
-
-## 6. Diretrizes de Resposta
-
-As respostas devem ser baseadas no contexto recuperado pela tool de conhecimento.
-
-Quando fizer sentido, o sistema deve incluir referências às seções ou trechos usados para sustentar a resposta.
-
-Se o usuário perguntar algo que não possa ser respondido com o contexto disponível, a resposta deve deixar isso claro.
-
-A aplicação deve evitar afirmar que a base contém informações que não foram realmente recuperadas.
-
-Uma boa resposta normalmente é:
-- clara
-- objetiva
-- baseada em contexto
-- consistente com o papel do agent
+### Observação curta
+Responsabilidade misturada gera bugs silenciosos em validação e formatação.
 
 ---
 
-## 7. Observações de Engenharia
+## Endpoint de API
 
-O projeto deve ser executável com Docker Compose.
+### Definição
+Endpoint é a borda de entrada da aplicação HTTP, não um “service locator” de toda a lógica.
 
-As variáveis de ambiente devem estar documentadas com clareza.
+### Na prática
+Ele recebe `message`, valida formato e encaminha para o fluxo interno.
 
-A base de código deve ser compreensível para outro desenvolvedor que a leia pela primeira vez.
+### Quando usar
+Quando necessário, coloque validação leve no endpoint e deixe regra de negócio para camadas internas.
 
-Testes são úteis para validar comportamentos importantes, especialmente validação de requisição, recuperação de contexto e fluxo esperado de resposta.
+### Observação curta
+Em MVPs simples pode parecer tentador concentrar fluxo no endpoint, mas isso reduz rastreabilidade.
 
-Ao trabalhar com saídas de LLM, respostas estruturadas ajudam bastante, mas uma temperatura baixa normalmente já é suficiente para garantir formatação consistente.
+### Ponto de atenção
+“Em projetos pequenos, colocar regra de negócio inteira no endpoint é a forma mais prática e correta.”
 
 ---
 
-## 8. Trade-offs de Design
+## Validação
 
-Não existe uma única arquitetura correta para este desafio.
+### Definição
+Validação garante que a entrada e saída estejam no formato esperado antes de seguir o fluxo.
 
-Uma solução mais simples e com limites claros costuma ser melhor do que uma solução excessivamente complexa.
+### Na prática
+Verificar `message` vazio, muito curto ou tipo inválido é parte obrigatória.
 
-É aceitável fazer simplificações pragmáticas, desde que o comportamento principal fique claro:
-- entrada de mensagem
-- orquestração do agent
-- recuperação de conhecimento
-- geração de resposta baseada em contexto
+### Quando usar
+Sempre antes de chamar LLM/Tool em produção ou testes.
 
-O mais importante não é a quantidade de camadas, mas sim se a solução é coerente, testável e fácil de entender.
+### Observação curta
+Sem validação, a tool pode ser chamada com parâmetros inválidos e retornar contexto irrelevante.
+
+---
+
+## Agent
+
+### Definição
+Agent é quem coordena o fluxo de decisão e chama recursos externos (tool, LLM, etc.).
+
+### Na prática
+Recebe a pergunta, decide buscar contexto e organiza prompt/resposta final.
+
+### Quando usar
+Use agent quando houver decisão explícita de “buscar ou não buscar” contexto e montar resposta com base nisso.
+
+### Observação curta
+O agent não precisa ter lógica de domínio extensa, mas precisa manter o fluxo consistente.
+
+---
+
+## Instruções de sistema
+
+### Definição
+Instruções de sistema orientam comportamento, tom e limites do LLM.
+
+### Na prática
+Definem prioridade do contrato (formato de resposta, fallback, foco no contexto).
+
+### Quando usar
+Sempre definir que faltando contexto o resultado deve ser transparente e não inventar.
+
+### Observação curta
+Prompt robusto ajuda, mas não substitui verificação da saída.
+
+### Ponto de atenção
+“Prompts de sistema longos eliminam a necessidade de validação de saída.”
+
+---
+
+## Tool de conhecimento
+
+### Definição
+Tool de conhecimento consulta a base (Markdown) para recuperar trechos úteis.
+
+### Na prática
+Pode buscar por palavra-chave, por seção e retornar trecho + seção.
+
+### Quando usar
+Sempre que a resposta depender de conteúdo específico da base técnica.
+
+### Observação curta
+A tool não deve responder usuário final; ela alimenta o agent com contexto.
+
+---
+
+## Rastreabilidade
+
+### Definição
+Capacidade de apontar de onde veio a informação usada na resposta.
+
+### Na prática
+Cada resposta deve incluir seção consultada para facilitar revisão.
+
+### Quando usar
+Sempre em desafios com output estruturado.
+
+### Observação curta
+Sem rastreabilidade, respostas parecem decoradas e geram baixa confiabilidade.
+
+---
+
+## LLM no fluxo principal
+
+### Definição
+LLM transforma pergunta + contexto em resposta final.
+
+### Na prática
+O LLM não é fonte primária da verdade: ele interpreta o contexto recuperado.
+
+### Quando usar
+Sempre que houver necessidade de linguagem natural baseada na base.
+
+### Observação curta
+Formato de resposta depende de prompt + validação; não depende de um único parâmetro de geração.
+
+### Ponto de atenção
+“Temperatura baixa já garante formato JSON válido sem validação adicional.”
+
+---
+
+## Resposta estruturada
+
+### Definição
+Formato previsível de retorno para a API (ex.: `answer`, `sources`).
+
+### Na prática
+Evite texto solto; prefira estrutura única para todos os casos.
+
+### Quando usar
+Sempre que a API for consumida por outro sistema.
+
+### Observação curta
+Mesmo texto simples precisa de contrato rígido no contrato de resposta.
+
+---
+
+## Falta de contexto
+
+### Definição
+Situação em que a KB não cobre a pergunta com segurança.
+
+### Na prática
+Responder com limitação explícita protege contra alucinação.
+
+### Quando usar
+Se a busca retorna vazio ou baixa relevância, retornar fallback.
+
+### Observação curta
+Resposta esperada de fallback:
+`{"answer":"Não encontrei informação suficiente na base para responder essa pergunta.","sources":[]}`
+
+---
+
+## Boas práticas gerais
+
+### Definição
+Conjunto de escolhas práticas para manter clareza e consistência.
+
+### Na prática
+Variáveis explícitas (`KB_URL`), divisão por responsabilidade, testes básicos de contrato.
+
+### Quando usar
+Sempre, em qualquer implementação mínima que queira passar revisão.
+
+### Observação curta
+Preferir decisões explícitas e simples em vez de soluções “genéricas demais”.
+
+---
+
+## Limites desta base
+
+### Definição
+Escopo deliberado: O1 de backend com agent, tool, contexto e resposta simples.
+
+### Na prática
+Se a pergunta sair desse tema, não inventar; declarar ausência de contexto.
+
+### Quando usar
+Sempre que o contexto retornado for baixo ou fora do escopo.
+
+### Observação curta
+Exemplo de retorno quando não há cobertura no escopo:
+`"Não encontrei informação suficiente na base para responder essa pergunta."`
