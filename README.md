@@ -41,7 +41,7 @@ Montar uma solução simples e funcional com:
 
 - Pode usar qualquer framework/lib de API e qualquer biblioteca de LLM (ou implementação manual), desde que o comportamento final atenda ao contrato.
 - Não precisa de arquitetura complexa nem serviços extras na entrega mínima.
-- Para padronizar, deixe o provedor/modelo configurável por ambiente (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY` no `.env`).
+- Para padronizar, deixe o provedor/modelo configurável por ambiente (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL` no `.env`).
 - O serviço em `docker compose` deve ler variáveis do `.env` (seja via `env_file` no serviço ou configuração equivalente).
 - É recomendado usar FastAPI por ergonomia (Swagger automático), mas não é obrigatório.
 
@@ -86,10 +86,11 @@ Montar uma solução simples e funcional com:
 
 ```env
 KB_URL=https://raw.githubusercontent.com/igortce/python-agent-challenge/refs/heads/main/python_agent_knowledge_base.md
+# Exemplo (padrão de execução). Outras combinações de LLM são aceitas.
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=sua_chave_aqui
 LLM_BASE_URL=https://api.openai.com/v1
+LLM_API_KEY=sua_chave_aqui
 
 MEMORY_STORE=
 
@@ -98,6 +99,15 @@ PORT=8000
 ```
 
 `MEMORY_STORE` pode ficar vazio na entrega mínima; use somente se implementar memória por `session_id`.
+
+### Observação importante de interoperabilidade
+
+- O `.env.example` usa OpenAI apenas como ponto de partida.
+- O que importa para aprovação é o fluxo funcional com `LLM_PROVIDER`, `LLM_MODEL`, `LLM_BASE_URL` e `LLM_API_KEY` corretos.
+- Provedores alternativos (como Azure OpenAI, OpenRouter, Ollama, Mistral, etc.) são aceitos desde que:
+  - o serviço responda ao modelo escolhido via API compatível;
+  - o restante do contrato esteja correto;
+  - o fallback e a integração com a KB funcionem.
 
 ## Como validar localmente (mínimo)
 
