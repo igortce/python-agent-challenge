@@ -6,7 +6,7 @@
 Composição é quando uma função/classe utiliza outra instância para executar parte do trabalho.
 
 ### Na prática
-Em Python, composição aparece em `service -> client`, `agent -> tool`, `flow -> llm_client`.
+Em Python, composição aparece em `service -> client`, `orquestração -> tool`, `fluxo -> llm_client`.
 
 ### Quando usar
 Use para reduzir acoplamento e facilitar teste unitário.
@@ -89,19 +89,19 @@ Sem validação, a tool pode ser chamada com parâmetros inválidos e retornar c
 
 ---
 
-## Agent
+## Orquestração
 
 ### Definição
-Agent é quem coordena o fluxo de decisão e chama recursos externos (tool, LLM, etc.).
+A orquestração é quem coordena o fluxo de decisão e chama recursos externos (tool, LLM, etc.).
 
 ### Na prática
 Recebe a pergunta, decide buscar contexto e organiza prompt/resposta final.
 
 ### Quando usar
-Use agent quando houver decisão explícita de “buscar ou não buscar” contexto e montar resposta com base nisso.
+Use orquestração quando houver decisão explícita de “buscar ou não buscar” contexto e montar resposta com base nisso.
 
 ### Observação curta
-O agent não precisa ter lógica de domínio extensa, mas precisa manter o fluxo consistente.
+A orquestração não precisa ter lógica de domínio extensa, mas precisa manter o fluxo consistente.
 
 ---
 
@@ -136,7 +136,7 @@ Pode buscar por palavra-chave, por seção e retornar trecho + seção.
 Sempre que a resposta depender de conteúdo específico da base técnica.
 
 ### Observação curta
-A tool não deve responder usuário final; ela alimenta o agent com contexto.
+A tool não deve responder usuário final; ela alimenta a orquestração com contexto.
 
 ---
 
@@ -227,7 +227,7 @@ Preferir decisões explícitas e simples em vez de soluções “genéricas dema
 ## Limites desta base
 
 ### Definição
-Escopo deliberado: O1 de backend com agent, tool, contexto e resposta simples.
+Escopo deliberado: O1 de backend com orquestração, tool, contexto e resposta simples.
 
 ### Na prática
 Se a pergunta sair desse tema, não inventar; declarar ausência de contexto.

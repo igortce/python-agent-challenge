@@ -267,7 +267,7 @@ curl -X POST "http://localhost:8000/messages" \
   - `sources`: `Herança`
   - Esperado: citar cenários de semelhança de contrato/comportamento.
 - Pergunta: `Qual o papel da orquestração?`
-  - `sources`: `Agent` (ou seção equivalente da KB sobre fluxo)
+  - `sources`: `Orquestração`
   - Esperado: coordenar decisão de fluxo, tool e chamada do LLM.
 - Pergunta: `A tool deve responder diretamente ao usuário?`
   - `sources`: `Tool de conhecimento`
