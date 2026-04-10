@@ -1,13 +1,13 @@
 # Python Agent Challenge
 
-Desafio técnico para vaga **A1/A2**: construir um backend Python com agente de IA e uma base de conhecimento em Markdown.
+Desafio técnico para vaga **A1/A2**: construir um backend Python com orquestração de fluxo por IA e uma base de conhecimento em Markdown.
 
 ## Objetivo
 
 Montar uma solução simples e funcional com:
 
 - API em Python.
-- Orquestração por agente.
+- Orquestração de fluxo no backend (pode usar padrões de agente ou estrutura equivalente).
 - Uso de uma tool para buscar contexto.
 - Resposta gerada com LLM e rastreável por fonte.
 
@@ -19,9 +19,13 @@ Montar uma solução simples e funcional com:
 - A solução enviada deve usar esta KB pública como fonte oficial de validação final.
 - Regra de aceite: para a validação final da vaga, `KB_URL` precisa referenciar esta URL (sem usar cópia local da KB como fonte principal).
 - Entrada mínima: `message`
-- Uso de agent no fluxo principal
+- No fluxo principal de `/messages`, orquestrar as etapas de:
+  - receber `message`,
+  - consultar contexto via tool,
+  - chamar LLM com pergunta + contexto,
+  - retornar `answer`.
 - Uso obrigatório de **uma tool** para consultar a base de conhecimento em Markdown
-- A consulta da tool deve ser via HTTP (URL configurável)
+- A consulta da tool deve ser via HTTP, usando `KB_URL` (URL configurável).
 - Uso de LLM no fluxo principal
 - Retornar apenas:
   - `answer` (texto)
@@ -30,12 +34,12 @@ Montar uma solução simples e funcional com:
 - `session_id`: opcional.
   - Se enviado, o fluxo pode manter contexto curto para esse identificador.
   - Se não enviado, cada chamada é independente.
-- Explicar em texto curto quais regras foram passadas ao agent no fluxo (sem publicar “receita pronta” de prompt).
+- Explicar em texto curto quais regras foram passadas ao fluxo no projeto (sem publicar “receita pronta” de prompt).
 - Sem frontend obrigatório
 
 ## Regras técnicas
 
-- Pode usar qualquer framework/lib de API e qualquer biblioteca de agente/LLM (ou implementação manual), desde que o comportamento final atenda ao contrato.
+- Pode usar qualquer framework/lib de API e qualquer biblioteca de LLM (ou implementação manual), desde que o comportamento final atenda ao contrato.
 - Não precisa de arquitetura complexa nem serviços extras na entrega mínima.
 - Para padronizar, deixe o provedor/modelo configurável por ambiente (`LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY` no `.env`).
 - O serviço em `docker compose` deve ler variáveis do `.env` (seja via `env_file` no serviço ou configuração equivalente).
@@ -44,12 +48,13 @@ Montar uma solução simples e funcional com:
 ## LLM no fluxo principal (sem detalhe de framework)
 
 - O LLM é responsável pela síntese final da resposta.
-- O agente deve combinar `message` + contexto da tool e gerar `answer`.
+- O fluxo de orquestração deve combinar `message` + contexto da tool e gerar `answer`.
 - A lógica de busca fica fora do LLM, via tool obrigatória.
+- A tool deve buscar a KB em Markdown via HTTP a partir de `KB_URL` e retornar trechos relevantes para contexto.
 - Não pode responder com texto hardcoded ou regras internas fora da KB.
 - Não confie em `temperature` para garantir formato; valide saída no código (especialmente estrutura).
 - Fallback obrigatório: sem contexto suficiente, retornar `answer` padrão + `sources: []`.
-- Quando falamos de “regras do agent/prompt”, queremos regras de decisão simples:
+- Quando falamos de “regras do fluxo/prompt”, queremos regras de decisão simples:
   - quando chamar a tool;
   - quais partes do contexto entram no LLM;
   - quando retornar fallback.
@@ -72,7 +77,7 @@ Montar uma solução simples e funcional com:
 
 - Use `KB_URL` apontando para a KB em Markdown do repositório do desafio:  
   `https://raw.githubusercontent.com/igortce/python-agent-challenge/refs/heads/main/python_agent_knowledge_base.md`
-- A resposta do agente deve ser construída a partir do contexto retornado pela tool.
+- A resposta do sistema deve ser construída a partir do contexto retornado pela tool.
 - A base de conhecimento é propositalmente técnica e curta; o objetivo é o candidato justificar decisões com base nela, não copiar fluxo inteiro.
 
 > A URL acima é a fonte oficial de validação. O candidato pode sobrescrever `KB_URL` para testes locais, **mas a submissão final deve usar esta KB pública**.
@@ -169,6 +174,7 @@ curl -X POST "http://localhost:8000/messages" \
 
 > `sources` no sucesso deve conter **pelo menos 1** seção.
 > Cada item deve conter apenas `section` (sem exigir `excerpt` no contrato).
+> Se necessário, pode haver múltiplas seções em `sources`.
 
 > Observação de implementação: em logs internos de avaliação você pode incluir `line`/`excerpt` para depuração, mas **não** é requisito do contrato da API.
 
@@ -184,17 +190,17 @@ curl -X POST "http://localhost:8000/messages" \
 ## Fluxo mínimo esperado
 
 1. Receber `message`.
-2. Agent chama a tool para buscar contexto relevante.
+2. O fluxo de orquestração chama a tool para buscar contexto relevante.
 3. Tool consulta `KB_URL` por HTTP e retorna seções/trechos.
-4. Agent monta chamada ao LLM com pergunta + contexto.
+4. O fluxo monta chamada ao LLM com pergunta + contexto.
 5. Retornar resposta final em JSON. Sem contexto: fallback obrigatório.
 
 ## Regras de implementação
 
 - Validar `message` na entrada.
-- Separar responsabilidades em API, agent, tool e cliente LLM.
+- Separar responsabilidades em API, orquestração, tool e cliente LLM.
 - `sources` só pode conter seções realmente usadas.
-- Documentar a estratégia do agent (regras de decisão): quando consultar tool, como montar contexto e como decidir fallback.
+- Documentar a estratégia do fluxo (regras de decisão): quando consultar tool, como montar contexto e como decidir fallback.
 - Não responder perguntas de forma hardcoded.
 - Implementar fallback com `sources: []` quando não houver contexto suficiente.
 - Se implementar memória por sessão, garantir:
@@ -212,6 +218,17 @@ curl -X POST "http://localhost:8000/messages" \
 - Explicação curta de decisões técnicas.
 
 ## Validação (automática + revisão)
+
+### Casos mínimos obrigatórios para revisão (4 perguntas)
+
+- `O que é composição?`  
+  - `sources`: `Composição`.
+- `Qual o papel da Tool de conhecimento?`  
+  - `sources`: `Tool de conhecimento`.
+- `A tool deve responder diretamente ao usuário?`  
+  - `sources`: `Tool de conhecimento`.
+- `Como agir sem contexto suficiente?`  
+  - `sources`: `[]` e mensagem padrão de fallback.
 
 - Validação mínima automatizada:
   - `POST /messages` retorna JSON válido com `answer` e `sources`.
@@ -239,8 +256,8 @@ curl -X POST "http://localhost:8000/messages" \
 - Pergunta: `Quando usar herança?`
   - `sources`: `Herança`
   - Esperado: citar cenários de semelhança de contrato/comportamento.
-- Pergunta: `Qual o papel do agent?`
-  - `sources`: `Agent`
+- Pergunta: `Qual o papel da orquestração?`
+  - `sources`: `Agent` (ou seção equivalente da KB sobre fluxo)
   - Esperado: coordenar decisão de fluxo, tool e chamada do LLM.
 - Pergunta: `A tool deve responder diretamente ao usuário?`
   - `sources`: `Tool de conhecimento`
@@ -267,8 +284,8 @@ curl -X POST "http://localhost:8000/messages" \
 ## Critérios de aprovação
 
 - Endpoint e contrato corretos.
-- Uso real de agente + tool + LLM.
-- Explicitação clara da política de decisão do agent (regras de decisão) na entrega.
+- Uso real de orquestração + tool + LLM no fluxo principal.
+- Explicitação clara da política de decisão do fluxo (regras de decisão) na entrega.
 - `sources` consistente com a KB usada.
 - Resposta de fallback clara sem contexto.
 - Organização razoável para o nível A1/A2.
